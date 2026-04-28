@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Ban, CheckCircle2, RefreshCw, XCircle } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { Ban, CheckCircle2, RefreshCw, Settings, XCircle } from 'lucide-react';
+import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import type { Listing, ListingStatus } from '../types';
 
 const statusStyles: Record<ListingStatus, string> = {
@@ -11,12 +11,14 @@ const statusStyles: Record<ListingStatus, string> = {
 
 export default function ListingsModeration() {
   const [listings, setListings] = useState<Listing[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(isSupabaseConfigured);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | ListingStatus>('all');
 
   async function fetchListings() {
+    if (!isSupabaseConfigured) return;
+
     setLoading(true);
     setError(null);
 
@@ -76,6 +78,24 @@ export default function ListingsModeration() {
 
     await fetchListings();
     setActionLoading(null);
+  }
+
+  if (!isSupabaseConfigured) {
+    return (
+      <div className="rounded-2xl border border-border bg-surface p-6">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-ocean/15 text-ocean">
+          <Settings size={24} />
+        </div>
+        <h2 className="mt-5 text-3xl font-black tracking-tight">Supabase setup required</h2>
+        <p className="mt-3 max-w-2xl text-mutedText">
+          The dashboard deployed successfully. Add real Supabase environment variables in Vercel to enable listing moderation.
+        </p>
+        <div className="mt-6 rounded-xl border border-border bg-matte p-4 font-mono text-sm text-mutedText">
+          <div>VITE_SUPABASE_URL=your_real_supabase_url</div>
+          <div className="mt-2">VITE_SUPABASE_ANON_KEY=your_real_supabase_anon_key</div>
+        </div>
+      </div>
+    );
   }
 
   return (
